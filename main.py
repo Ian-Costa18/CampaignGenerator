@@ -1,6 +1,6 @@
 """ Main File for Campaign Generator """
 
-import pickle
+import pickle # Rick
 import os.path
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -61,23 +61,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-
-
-"""
-import json
-from google.oauth2 import service_account
-import gspread
-    SCOPE = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
-    SECRETS_FILE = "campaign-generator-291301-900024a08528.json"
-    SPREADSHEET = "testformspreadsheet"
-
-    json_key = json.load(open(SECRETS_FILE))
-    # Authenticate using the signed key
-    credentials = service_account.Credentials.from_service_account_file(
-        SECRETS_FILE, scopes=SCOPE)
-    gc = gspread.authorize(credentials)
-    workbook = gc.open(SPREADSHEET)
-    print(workbook)
-"""
