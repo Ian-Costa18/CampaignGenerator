@@ -132,4 +132,5 @@ dmypy.json
 .idea/
 credentials.json
 token.pickle
+output/
 
