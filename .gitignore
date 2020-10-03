@@ -133,4 +133,5 @@ dmypy.json
 credentials.json
 token.pickle
 output/
+mailcreds.txt
 
