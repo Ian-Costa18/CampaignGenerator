@@ -159,19 +159,15 @@ Vote {current_candidate['name']} for {current_candidate['position']} of {current
         file_paths = os.listdir("output")
         with ZipFile('output/Generated Campaign.zip', 'w') as zipped:
             # writing each file one by one
-            os.chdir("output")
+            output_path = "output/"
             for file in file_paths:
                 if "zip" not in file:
-                    zipped.write(file)
-                    os.remove(file)
+                    zipped.write(output_path+file)
+                    os.remove(output_path+file)
             zipped.close()
             if send_to_email:
-                send_email(current_candidate["email"], "Generated Campaign.zip")
-            if os.path.exists(f"{current_candidate['name']}.zip"):
-                os.remove(f"{current_candidate['name']}.zip")
-            os.rename("Generated Campaign.zip", f"{current_candidate['name']}.zip")
-            os.chdir("..")
+                send_email(current_candidate["email"], output_path+"Generated Campaign.zip")
+            if os.path.exists(output_path+f"{current_candidate['name']}.zip"):
+                os.remove(output_path+f"{current_candidate['name']}.zip")
+            os.rename(output_path+"Generated Campaign.zip", output_path+f"{current_candidate['name']}.zip")
 
-
-if __name__ == "__main__":
-    generate_video("Assets/Indsign.png", "Green Jobs", "output/test.mp4")

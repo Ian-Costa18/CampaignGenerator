@@ -2,6 +2,8 @@
 
 import os
 import pickle  # Rick
+from threading import Thread
+from time import sleep
 
 import gspread
 from google.auth.transport.requests import Request
@@ -73,13 +75,20 @@ def get_spread():
 def main():
     """ Main function for Campaign Generator """
 
-    unprocessed_candidates = get_spread()
+    thread = None
+    while True:
 
-    if not unprocessed_candidates:
-        print('No new candidates to process')
-        return
+        unprocessed_candidates = get_spread()
 
-    process_candidate(unprocessed_candidates, send_to_email=True)
+        if not unprocessed_candidates:
+            print('No new candidates to process')
+            sleep(5)
+            continue
+        print("Found new candidates")
+        thread = Thread(target=process_candidate, args=(unprocessed_candidates, "send_to_email=True"))
+        thread.start()
+
+
 
 
 if __name__ == '__main__':
