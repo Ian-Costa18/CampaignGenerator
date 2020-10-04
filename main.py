@@ -1,7 +1,7 @@
 """ Main File for Campaign Generator """
 
 import os
-import pickle # Rick
+import pickle  # Rick
 
 import gspread
 from google.auth.transport.requests import Request
@@ -45,7 +45,7 @@ def get_spread():
     unprocessed = []
     for row in values:
         if row[10].lower() == "yes":
-            print(f"{row[2]} already processed")
+            continue
         else:
             unprocessed.append(row)
             index = values.index(row)
@@ -75,9 +75,7 @@ def main():
         print('No new candidates to process')
         return
 
-    process_candidate(unprocessed_candidates, send_to_email=False)
-
-
+    process_candidate(unprocessed_candidates, send_to_email=True)
 
 
 if __name__ == '__main__':

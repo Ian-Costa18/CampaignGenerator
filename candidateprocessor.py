@@ -7,9 +7,12 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from shutil import rmtree
 from zipfile import ZipFile
-from PIL import Image, ImageDraw, ImageFont
 
+import cv2
+from PIL import Image, ImageDraw, ImageFont
 from imgur_downloader import ImgurDownloader
+from moviepy.editor import VideoFileClip, concatenate_videoclips
+
 
 def generate_sign(name, position, district, party, image, output):
     sign_templates = {
@@ -33,6 +36,35 @@ def generate_sign(name, position, district, party, image, output):
     draw.multiline_text(((2401 - text_w) / 2 + 253, 1750), text, (0, 0, 0), font=font, align="center", spacing=20)
 
     sign.save(output, quality=95)
+
+def generate_video(sign, issue, output):
+
+    videos = {
+        "Climate Change": "ClimateChange.mp4",
+        "Green Jobs": "GreenJobs.mp4",
+        "Tourism": "Tourism.mp4",
+        "Small Business": "SmallBusiness.mp4",
+        "Public health": "PublicHealth.mp4",
+        "Education Funding": "EducationFunding.mp4"
+    }
+
+    video_path = f"Assets/{videos[issue]}"
+
+    frame = cv2.imread(sign)
+    frame = cv2.resize(frame, (1920, 1080))
+    height, width, layers = frame.shape
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    video = cv2.VideoWriter("temp.mp4", fourcc, 1, (width, height))
+    for i in range(5):
+        video.write(frame)
+    video.release()
+
+    image_clip = VideoFileClip("temp.mp4")
+    original_video = VideoFileClip(video_path)
+    final_video = concatenate_videoclips([original_video, image_clip], method="compose")
+
+    final_video.write_videofile(output)
+    os.remove("temp.mp4")
 
 
 def send_email(receiver_email, filename):
@@ -79,6 +111,7 @@ def send_email(receiver_email, filename):
         server.login(sender_email, password)
         server.sendmail(sender_email, receiver_email, text)
 
+
 def process_candidate(candidate_list, send_to_email=True):
 
     for current_candidate in candidate_list:
@@ -87,9 +120,10 @@ def process_candidate(candidate_list, send_to_email=True):
         ImgurDownloader(current_candidate["image"]).save_images("candidate_images")  # Download Imgur image/album
         candidate_image = f"candidate_images/{os.listdir('candidate_images')[0]}"  # Find the first image in the album
 
+        # Generate the sign with the candidates data
+        sign_output = f"output/{current_candidate['name']} sign.png"
         generate_sign(current_candidate["name"], current_candidate["position"], current_candidate["district"],
-                      current_candidate["party"], candidate_image,
-                      f"output/{current_candidate['name']} sign.png")  # Generate the sign with the candidates data
+                      current_candidate["party"], candidate_image, sign_output)
         rmtree("candidate_images")  # Delete the images folder
 
         # Create the campaign speech
@@ -107,11 +141,11 @@ Vote {current_candidate['name']} for {current_candidate['position']} of {current
         with open(f"output/{current_candidate['name']} speech.txt", "w") as file:
             file.write(speech)
 
-        # TODO: Create campaign video
+        generate_video(sign_output, current_candidate["issues"][0], f"output/{current_candidate['name']} video.mp4")
 
         # Zip all files in output folder
         file_paths = os.listdir("output")
-        with ZipFile('output/output.zip', 'w') as zip:
+        with ZipFile('output/Generated Campaign.zip', 'w') as zip:
             # writing each file one by one
             os.chdir("output")
             for file in file_paths:
@@ -120,8 +154,12 @@ Vote {current_candidate['name']} for {current_candidate['position']} of {current
                     os.remove(file)
             zip.close()
             if send_to_email:
-                send_email(current_candidate["email"], "output.zip")
+                send_email(current_candidate["email"], "Generated Campaign.zip")
             if os.path.exists(f"{current_candidate['name']}.zip"):
                 os.remove(f"{current_candidate['name']}.zip")
-            os.rename("output.zip", f"{current_candidate['name']}.zip")
+            os.rename("Generated Campaign.zip", f"{current_candidate['name']}.zip")
             os.chdir("..")
+
+
+if __name__ == "__main__":
+    generate_video("Assets/Indsign.png", "Green Jobs", "output/test.mp4")
