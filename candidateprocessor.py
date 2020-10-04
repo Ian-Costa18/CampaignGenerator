@@ -15,6 +15,7 @@ from PIL import Image, ImageDraw, ImageFont
 from imgur_downloader import ImgurDownloader
 from moviepy.editor import VideoFileClip, concatenate_videoclips
 
+CWD = os.getcwd()+"/"
 
 def generate_sign(name, position, district, party, image, output):
     sign_templates = {
@@ -28,8 +29,8 @@ def generate_sign(name, position, district, party, image, output):
     img = img.resize((2197, 3304))
     sign.paste(img, (2906, 0))
 
-    font = ImageFont.truetype("Assets/font.ttf", 250)
-    font_name = ImageFont.truetype("Assets/font.ttf", 300)
+    font = ImageFont.truetype(CWD+"Assets/font.ttf", 250)
+    font_name = ImageFont.truetype(CWD+"Assets/font.ttf", 300)
     draw = ImageDraw.Draw(sign)
     text = f"{position}\nOf\n{district}"
     name_w, name_h = draw.textsize(text, font=font_name)
@@ -53,23 +54,23 @@ def generate_video(sign, issue, output):
         "Education Funding": "EducationFunding.mp4"
     }
 
-    video_path = f"Assets/{videos[issue]}"
+    video_path = CWD+f"Assets/{videos[issue]}"
 
     frame = cv2.imread(sign)
     frame = cv2.resize(frame, (1920, 1080))
     height, width, layers = frame.shape
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    video = cv2.VideoWriter("temp.mp4", fourcc, 1, (width, height))
+    video = cv2.VideoWriter(CWD+"temp.mp4", fourcc, 1, (width, height))
     for i in range(5):
         video.write(frame)
     video.release()
 
-    image_clip = VideoFileClip("temp.mp4")
+    image_clip = VideoFileClip(CWD+"temp.mp4")
     original_video = VideoFileClip(video_path)
     final_video = concatenate_videoclips([original_video, image_clip], method="compose")
 
     final_video.write_videofile(output)
-    os.remove("temp.mp4")
+    os.remove(CWD+"temp.mp4")
 
 
 def send_email(receiver_email, filename):
@@ -79,7 +80,7 @@ def send_email(receiver_email, filename):
     body = "Thank you for using the Campaign Generator! Submit another campaign here: https://forms.gle/iTE4DXoEEpYytyru8"
     sender_email = "campaigngeneratorjwu@gmail.com"
 
-    with open(r"G:\Files\Programs\CampaignGenerator\mailcreds.txt", "r") as file:
+    with open(CWD+"mailcreds.txt", "r") as file:
         password = file.read()
 
     # Create a multipart message and set headers
@@ -127,15 +128,15 @@ def process_candidate(candidate_list, send_to_email=True):
     for current_candidate in candidate_list:
         # Create the campaign sign
         # Get the candidate's image from Imgur
-        ImgurDownloader(current_candidate["image"]).save_images("candidate_images")  # Download Imgur image/album
-        candidate_image = f"candidate_images/{os.listdir('candidate_images')[0]}"  # Find the first image in the album
+        ImgurDownloader(current_candidate["image"]).save_images(CWD+"candidate_images")  # Download Imgur image/album
+        candidate_image = CWD+f"candidate_images/{os.listdir('candidate_images')[0]}"  # Find the first image in the album
 
         # Generate the sign with the candidates data
-        sign_output = f"output/{current_candidate['name']} sign.png"
+        sign_output = CWD+f"output/{current_candidate['name']} sign.png"
         generate_sign(current_candidate["name"], current_candidate["position"],
                       current_candidate["district"], current_candidate["party"],
                       candidate_image, sign_output)
-        rmtree("candidate_images")  # Delete the images folder
+        rmtree(CWD+"candidate_images")  # Delete the images folder
 
         # Create the campaign speech
         speech = f"""My Fellow Americans,
@@ -149,17 +150,17 @@ However, putting our all towards {current_candidate['issues'][0]} won’t be eno
 Vote {current_candidate['name']} for {current_candidate['position']} of {current_candidate['district']}!
 """
         # Write the speech to a file
-        with open(f"output/{current_candidate['name']} speech.txt", "w") as file:
+        with open(CWD+f"output/{current_candidate['name']} speech.txt", "w") as file:
             file.write(speech)
 
         generate_video(sign_output, current_candidate["issues"][0],
-                       f"output/{current_candidate['name']} video.mp4")
+                       CWD+f"output/{current_candidate['name']} video.mp4")
 
         # Zip all files in output folder
-        file_paths = os.listdir("output")
-        with ZipFile('output/Generated Campaign.zip', 'w') as zipped:
+        file_paths = os.listdir(CWD+"output")
+        with ZipFile(CWD+'output/Generated Campaign.zip', 'w') as zipped:
             # writing each file one by one
-            output_path = "output/"
+            output_path = CWD+"output/"
             for file in file_paths:
                 if "zip" not in file:
                     zipped.write(output_path+file)
