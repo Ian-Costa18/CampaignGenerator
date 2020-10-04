@@ -2,7 +2,6 @@
 
 import os
 import pickle  # Rick
-from threading import Thread
 from time import sleep
 
 import gspread
@@ -85,8 +84,8 @@ def main():
             sleep(5)
             continue
         print("Found new candidates")
-        thread = Thread(target=process_candidate, args=(unprocessed_candidates, "send_to_email=True"))
-        thread.start()
+        process_candidate(unprocessed_candidates, send_to_email=True)
+
 
 
 
