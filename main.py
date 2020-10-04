@@ -3,7 +3,6 @@
 import os
 import pickle  # Rick
 from time import sleep
-from shutil import rmtree
 
 import gspread
 from google.auth.transport.requests import Request
@@ -74,7 +73,7 @@ def get_spread():
 
 def cleanup(current_candidate):
 
-    CWD = os.path.dirname(__file__)
+    CWD = os.path.dirname(os.path.realpath(__file__))
     output_directory = os.path.join(CWD, "output")
     output_files = os.listdir(output_directory)
     for file in output_files:
