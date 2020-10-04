@@ -163,7 +163,7 @@ Vote {current_candidate['name']} for {current_candidate['position']} of {current
             output_path = CWD+"output/"
             for file in file_paths:
                 if "zip" not in file:
-                    zipped.write(output_path+file)
+                    zipped.write(CWD+file, arcname=file)
                     os.remove(output_path+file)
             zipped.close()
             if send_to_email:
