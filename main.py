@@ -11,8 +11,12 @@ from candidateprocessor import process_candidate
 
 
 def get_spread():
+    """ Get's the contents of the Campaign Generator Spreadsheet
+    Outputs a list of candidates not seen by the program before"""
+
     # If modifying these scopes, delete the file token.pickle.
-    SCOPES = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
+    SCOPES = ['https://www.googleapis.com/auth/spreadsheets',
+              'https://www.googleapis.com/auth/drive']
 
     creds = None
     # The file token.pickle stores the user's access and refresh tokens, and is
@@ -46,10 +50,9 @@ def get_spread():
     for row in values:
         if row[10].lower() == "yes":
             continue
-        else:
-            unprocessed.append(row)
-            index = values.index(row)
-            worksheet.update(f"K{index+2}", "Yes")
+        unprocessed.append(row)
+        index = values.index(row)
+        worksheet.update(f"K{index+2}", "Yes")
 
     candidate_list = []
     for row in unprocessed:
@@ -68,6 +71,7 @@ def get_spread():
 
 
 def main():
+    """ Main function for Campaign Generator """
 
     unprocessed_candidates = get_spread()
 

@@ -1,3 +1,5 @@
+""" Main functionality """
+
 import os
 import smtplib
 import ssl
@@ -33,11 +35,14 @@ def generate_sign(name, position, district, party, image, output):
     name_w, name_h = draw.textsize(text, font=font_name)
     text_w, text_h = draw.multiline_textsize(text, font=font, spacing=20)
     draw.text(((2401 - name_w) / 2 + 253, 1400), name, (0, 0, 0), font=font_name, align="center")
-    draw.multiline_text(((2401 - text_w) / 2 + 253, 1750), text, (0, 0, 0), font=font, align="center", spacing=20)
+    draw.multiline_text(((2401 - text_w) / 2 + 253, 1750), text, (0, 0, 0),
+                        font=font, align="center", spacing=20)
 
     sign.save(output, quality=95)
 
 def generate_video(sign, issue, output):
+    """ Generates a campaign video based on the issue
+    output variable determines where the file will be saved"""
 
     videos = {
         "Climate Change": "ClimateChange.mp4",
@@ -68,11 +73,13 @@ def generate_video(sign, issue, output):
 
 
 def send_email(receiver_email, filename):
+    """ Sends an email with an attachment """
+
     subject = "Your AI Generated Campaign"
     body = "Thank you for using the Campaign Generator! Submit another campaign here: https://forms.gle/iTE4DXoEEpYytyru8"
     sender_email = "campaigngeneratorjwu@gmail.com"
 
-    with open("G:\Files\Programs\CampaignGenerator\mailcreds.txt", "r") as file:
+    with open(r"G:\Files\Programs\CampaignGenerator\mailcreds.txt", "r") as file:
         password = file.read()
 
     # Create a multipart message and set headers
@@ -113,6 +120,9 @@ def send_email(receiver_email, filename):
 
 
 def process_candidate(candidate_list, send_to_email=True):
+    """ Main function that generates the sign, video, and speech using the helper functions,
+     then sends the campaign in a zip over email
+      set send_to_email to false to disable emailing functionality"""
 
     for current_candidate in candidate_list:
         # Create the campaign sign
@@ -122,8 +132,9 @@ def process_candidate(candidate_list, send_to_email=True):
 
         # Generate the sign with the candidates data
         sign_output = f"output/{current_candidate['name']} sign.png"
-        generate_sign(current_candidate["name"], current_candidate["position"], current_candidate["district"],
-                      current_candidate["party"], candidate_image, sign_output)
+        generate_sign(current_candidate["name"], current_candidate["position"],
+                      current_candidate["district"], current_candidate["party"],
+                      candidate_image, sign_output)
         rmtree("candidate_images")  # Delete the images folder
 
         # Create the campaign speech
@@ -141,18 +152,19 @@ Vote {current_candidate['name']} for {current_candidate['position']} of {current
         with open(f"output/{current_candidate['name']} speech.txt", "w") as file:
             file.write(speech)
 
-        generate_video(sign_output, current_candidate["issues"][0], f"output/{current_candidate['name']} video.mp4")
+        generate_video(sign_output, current_candidate["issues"][0],
+                       f"output/{current_candidate['name']} video.mp4")
 
         # Zip all files in output folder
         file_paths = os.listdir("output")
-        with ZipFile('output/Generated Campaign.zip', 'w') as zip:
+        with ZipFile('output/Generated Campaign.zip', 'w') as zipped:
             # writing each file one by one
             os.chdir("output")
             for file in file_paths:
                 if "zip" not in file:
-                    zip.write(file)
+                    zipped.write(file)
                     os.remove(file)
-            zip.close()
+            zipped.close()
             if send_to_email:
                 send_email(current_candidate["email"], "Generated Campaign.zip")
             if os.path.exists(f"{current_candidate['name']}.zip"):
