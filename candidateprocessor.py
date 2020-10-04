@@ -163,7 +163,7 @@ def process_candidate(candidate_list, send_to_email=True):
                              "Campaign Generator Failed",
                              "The campaign generator failed to get your image from Imgur, please make sure you are using the direct link to the image (i.imgur.com)\n"+
                              "Resubmit your campaign here: https://forms.gle/mAwfNwK9SSLR1Riy9")
-            return
+            continue
         candidate_image = CWD(f"candidate_images/{os.listdir('candidate_images')[0]}")  # Find the first image in the album
 
         # Generate the sign with the candidates data
