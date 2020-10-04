@@ -3,12 +3,14 @@
 import os
 import pickle  # Rick
 from time import sleep
+from shutil import rmtree
 
 import gspread
 from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import InstalledAppFlow
+from imgur_downloader.imgurdownloader import ImgurException
 
-from candidateprocessor import process_candidate
+from candidateprocessor import process_candidate, send_error_email
 
 
 def get_spread():
@@ -70,11 +72,35 @@ def get_spread():
 
     return candidate_list
 
+def cleanup(current_candidate):
+
+    CWD = os.path.dirname(__file__)
+    output_directory = os.path.join(CWD, "output")
+    output_files = os.listdir(output_directory)
+    for file in output_files:
+        try:
+            if "Generated Campaign" in file:
+                os.remove(os.path.join(output_directory, file))
+            elif "zip" not in file:
+                os.remove(os.path.join(output_directory, file))
+        except Exception as err:
+            print(f"{file} could not be deleted :(")
+            continue
+    main_files = os.listdir(CWD)
+    for file in main_files:
+        try:
+            if current_candidate['name'] in file:
+                os.remove(os.path.join(CWD, file))
+            elif "temp" in file.lower():
+                os.remove(os.path.join(CWD, file))
+        except Exception as err:
+            print(f"{file} could not be deleted :(")
+            continue
+
 
 def main():
     """ Main function for Campaign Generator """
 
-    thread = None
     while True:
 
         unprocessed_candidates = get_spread()
@@ -84,9 +110,39 @@ def main():
             sleep(5)
             continue
         print("Found new candidates")
-        process_candidate(unprocessed_candidates, send_to_email=True)
+        for current_candidate in unprocessed_candidates:
+            # Cleanup temporary files from previous candidates before doing anything
+            cleanup(current_candidate)
 
-
+            print(f"Processing canidate: {current_candidate['name']}")
+            try:
+                process_candidate(current_candidate, send_to_email=True)
+                # Cleanup temporary files from the current candidate
+                cleanup(current_candidate)
+            except (KeyboardInterrupt, SystemExit):
+                print("Program interrupted")
+                raise
+            except ImgurException as err:
+                print("Error getting Imgur link, send error email...")
+                error_message = ("The campaign generator failed to get your image from Imgur, "
+                                 "please make sure you are using the direct link to the image (i.imgur.com)"
+                                 "\nResubmit your campaign here: https://forms.gle/mAwfNwK9SSLR1Riy9")
+                send_error_email(current_candidate["email"],
+                                 "Campaign Generator Failed",
+                                 error_message)
+                continue
+            except Exception as err:
+                print(err)
+                print("Unknown exception occurred, sending generic failure email")
+                error_message = ("The campaign generator failed to generate your campaign, "
+                                 "please resubmit your campaign here: https://forms.gle/mAwfNwK9SSLR1Riy9"
+                                 "\nIf the issue still occurs please reply to this email with the exception below:"
+                                f"\"\n{err}\""
+                )
+                send_error_email(current_candidate["email"],
+                                 "Campaign Generator Failed",
+                                 error_message)
+                continue
 
 
 

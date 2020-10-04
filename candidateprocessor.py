@@ -147,36 +147,27 @@ def send_error_email(receiver_email, subject, body):
         server.sendmail(sender_email, receiver_email, text)
 
 
-def process_candidate(candidate_list, send_to_email=True):
+def process_candidate(current_candidate, send_to_email=True):
     """ Main function that generates the sign, video, and speech using the helper functions,
      then sends the campaign in a zip over email
       set send_to_email to false to disable emailing functionality"""
 
-    for current_candidate in candidate_list:
-        # Create the campaign sign
-        # Get the candidate's image from Imgur
-        try:
-            ImgurDownloader(current_candidate["image"]).save_images(CWD("candidate_images"))  # Download Imgur image/album
-        except:
-            print("Error getting Imgur link, send error email...")
-            send_error_email(current_candidate["email"],
-                             "Campaign Generator Failed",
-                             "The campaign generator failed to get your image from Imgur, please make sure you are using the direct link to the image (i.imgur.com)\n"+
-                             "Resubmit your campaign here: https://forms.gle/mAwfNwK9SSLR1Riy9")
-            continue
-        candidate_image = CWD(f"candidate_images/{os.listdir('candidate_images')[0]}")  # Find the first image in the album
+    # Create the campaign sign
+    # Get the candidate's image from Imgur
+    ImgurDownloader(current_candidate["image"]).save_images(CWD("candidate_images"))  # Download Imgur image/album
+    candidate_image = CWD(f"candidate_images/{os.listdir('candidate_images')[0]}")  # Find the first image in the album
 
-        # Generate the sign with the candidates data
-        print(f"Generating campaign sign for {current_candidate['name']}")
-        sign_output = CWD(f"output/{current_candidate['name']} sign.png")
-        generate_sign(current_candidate["name"], current_candidate["position"],
-                      current_candidate["district"], current_candidate["party"],
-                      candidate_image, sign_output)
-        rmtree(CWD("candidate_images"))  # Delete the images folder
+    # Generate the sign with the candidates data
+    print(f"Generating campaign sign for {current_candidate['name']}")
+    sign_output = CWD(f"output/{current_candidate['name']} sign.png")
+    generate_sign(current_candidate["name"], current_candidate["position"],
+                  current_candidate["district"], current_candidate["party"],
+                  candidate_image, sign_output)
+    rmtree(CWD("candidate_images"))  # Delete the images folder
 
-        # Create the campaign speech
+    # Create the campaign speech
 
-        speech = f"""My Fellow Americans,
+    speech = f"""My Fellow Americans,
 
 I stand before you today not to spew fancy political rhetoric or to talk about what could be better. I’m here today because you all are here. And you’re clearly fed up with politics. I’m here because our democracy isn’t working for all of us. You all know that this is the most important election of our lifetime. So I’m going to do something. This is why I, {current_candidate['name']}, am running to be the {current_candidate['position']} of {current_candidate['district']}.
 
@@ -186,27 +177,27 @@ However, putting our all towards {current_candidate['issues'][0]} won’t be eno
 
 Vote {current_candidate['name']} for {current_candidate['position']} of {current_candidate['district']}!
 """
-        # Write the speech to a file
-        with open(CWD(f"output/{current_candidate['name']} speech.txt"), "w") as file:
-            file.write(speech)
+    # Write the speech to a file
+    with open(CWD(f"output/{current_candidate['name']} speech.txt"), "w") as file:
+        file.write(speech)
 
-        generate_video(sign_output, current_candidate["issues"][0],
-                       CWD(f"output/{current_candidate['name']} video.mp4"))
+    generate_video(sign_output, current_candidate["issues"][0],
+                   CWD(f"output/{current_candidate['name']} video.mp4"))
 
-        # Zip all files in output folder
-        file_paths = os.listdir(CWD("output"))
-        with ZipFile(os.path.join(CWD('output'), 'Generated Campaign.zip'), 'w') as zipped:
-            # writing each file one by one
-            os.chdir(CWD("output"))
-            for file in file_paths:
-                if "zip" not in file and current_candidate["name"] in file:
-                    zipped.write(file, arcname=file)
-                    os.remove(file)
-            zipped.close()
-            if send_to_email:
-                send_email(current_candidate["email"], "Generated Campaign.zip")
-            if os.path.exists(f"{current_candidate['name']}.zip"):
-                os.remove(f"{current_candidate['name']}.zip")
-            os.rename("Generated Campaign.zip", f"{current_candidate['name']}.zip")
-            os.chdir("..")
+    # Zip all files in output folder
+    file_paths = os.listdir(CWD("output"))
+    with ZipFile(os.path.join(CWD('output'), 'Generated Campaign.zip'), 'w') as zipped:
+        # writing each file one by one
+        os.chdir(CWD("output"))
+        for file in file_paths:
+            if "zip" not in file and current_candidate["name"] in file:
+                zipped.write(file, arcname=file)
+                os.remove(file)
+        zipped.close()
+        if send_to_email:
+            send_email(current_candidate["email"], "Generated Campaign.zip")
+        if os.path.exists(f"{current_candidate['name']}.zip"):
+            os.remove(f"{current_candidate['name']}.zip")
+        os.rename("Generated Campaign.zip", f"{current_candidate['name']}.zip")
+        os.chdir("..")
 
