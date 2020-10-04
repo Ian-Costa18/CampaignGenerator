@@ -89,7 +89,6 @@ def send_email(receiver_email, filename):
     message["From"] = sender_email
     message["To"] = receiver_email
     message["Subject"] = subject
-    message["Bcc"] = receiver_email  # Recommended for mass emails
 
     # Add body to email
     message.attach(MIMEText(body, "plain"))
@@ -133,7 +132,6 @@ def send_error_email(receiver_email, subject, body):
     message["From"] = sender_email
     message["To"] = receiver_email
     message["Subject"] = subject
-    message["Bcc"] = receiver_email  # Recommended for mass emails
 
     # Add body to email
     message.attach(MIMEText(body, "plain"))
